@@ -1,48 +1,86 @@
+let expenseItems = localStorage.getItem('user-expenses')
+  ? JSON.parse(localStorage.getItem('user-expenses'))
+  : [];
+
+window.onload = () => {
+  displayItems(expenseItems);
+};
+
 const form = document.querySelector('form');
+const ul = document.querySelector('ul');
+let editingIndex = -1;
 
-const fruits = document.querySelector('.fruits');
+form.addEventListener('submit', handleFormSubmit);
 
-form.addEventListener('submit', function(event){
-    event.preventDefault();
+function handleFormSubmit(e) {
+  e.preventDefault();
 
-    const inputValue = document.getElementById('fruit-to-add');
+  const amount = document.querySelector('#amount').value;
+  const description = document.querySelector('#description').value;
+  const category = document.querySelector('#category').value;
 
-    //Li-adding
-    const newLi = document.createElement('li');
-    const newLitext = document.createTextNode(inputValue.value);
- newLi.appendChild(newLitext);
- newLi.className = 'fruit';
+  if (amount == '' || description == '') return;
 
-//deltetBTN
- const deleteBtn = document.createElement('button');
- const deleteBtnText = document.createTextNode('x');
- deleteBtn.appendChild(deleteBtnText);
- deleteBtn.className = 'delete-btn';
- newLi.appendChild(deleteBtn);
+  if (editingIndex !== -1) {
+    expenseItems[editingIndex] = { amount, description, category };
+    editingIndex = -1;
+  } else {
+    expenseItems.push({
+      amount,
+      description,
+      category,
+    });
+  }
 
+  localStorage.setItem('user-expenses', JSON.stringify(expenseItems));
 
+  form.reset();
 
+  displayItems(expenseItems);
+}
 
-//editBTN
+function displayItems(items) {
+  if (!items.length) return;
+  ul.innerHTML = '';
+  items.forEach((item, index) => {
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    const deletebtn = document.createElement('button');
+    editbtn = document.createElement('button');
 
-const editBtn = document.createElement('button');
-const editBtnText = document.createTextNode('Edit');
- editBtn.appendChild(editBtnText);
- editBtn.className = 'edit-btn';
- newLi.appendChild(editBtn);
+    deletebtn.id = 'delete';
+    editbtn.id = 'edit';
 
+    span.innerText = `${item.amount}-${item.description}-${item.category}`;
+    deletebtn.innerText = 'Delete';
+    editbtn.innerText = 'Edit';
 
-//adding li as the last element of unorder list
-fruits.appendChild(newLi);
+    deletebtn.addEventListener('click', () => deleteItem(index));
+    editbtn.addEventListener('click', () => editItem(index));
 
+    li.append(span);
+    li.append(deletebtn);
+    li.append(editbtn);
 
-});
+    ul.append(li);
+  });
+}
 
+function deleteItem(index) {
+  expenseItems.splice(index, 1);
+  localStorage.setItem('user-expenses', JSON.stringify(expenseItems));
+  if (!expenseItems.length) location.reload();
+  displayItems(expenseItems);
+}
 
-fruits.addEventListener('click', function(event){
-    if(event.target.classList.contains('delete-btn')){
-        const fruitToDelete = event.target.parentElement;
-        fruits.removeChild(fruitToDelete);
-    };
-    
-});
+function editItem(index) {
+  let editAmount = document.querySelector('#amount');
+  let editDescription = document.querySelector('#description');
+  let editCategory = document.querySelector('#category');
+
+  editAmount.value = expenseItems[index].amount;
+  editDescription.value = expenseItems[index].description;
+  editCategory.value = expenseItems[index].category;
+
+  editingIndex = index;
+}
