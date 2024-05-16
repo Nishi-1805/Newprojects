@@ -1,86 +1,69 @@
-let expenseItems = localStorage.getItem('user-expenses')
-  ? JSON.parse(localStorage.getItem('user-expenses'))
-  : [];
+document.getElementById("appointment-form").addEventListener("submit", handleFormSubmit);
+window.addEventListener("DOMContentLoaded", fetchAndDisplayUsers);
 
-window.onload = () => {
-  displayItems(expenseItems);
-};
+function handleFormSubmit(event) {
+  event.preventDefault();
+  const userDetails = {
+    username: event.target.username.value,
+    email: event.target.email.value,
+    phone: event.target.phone.value,
+  };
+  axios
+    .post(
+      "https://crudcrud.com/api/753c5b07c7724977b1026319332f2aa4/appointmentData",
+      userDetails)
+    .then((response) => displayUserOnScreen(response.data))
+    .catch((error) => console.log(error));
 
-const form = document.querySelector('form');
-const ul = document.querySelector('ul');
-let editingIndex = -1;
-
-form.addEventListener('submit', handleFormSubmit);
-
-function handleFormSubmit(e) {
-  e.preventDefault();
-
-  const amount = document.querySelector('#amount').value;
-  const description = document.querySelector('#description').value;
-  const category = document.querySelector('#category').value;
-
-  if (amount == '' || description == '') return;
-
-  if (editingIndex !== -1) {
-    expenseItems[editingIndex] = { amount, description, category };
-    editingIndex = -1;
-  } else {
-    expenseItems.push({
-      amount,
-      description,
-      category,
-    });
-  }
-
-  localStorage.setItem('user-expenses', JSON.stringify(expenseItems));
-
-  form.reset();
-
-  displayItems(expenseItems);
+  // Clearing the input fields
+  document.getElementById("username").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("phone").value = "";
 }
 
-function displayItems(items) {
-  if (!items.length) return;
-  ul.innerHTML = '';
-  items.forEach((item, index) => {
-    const li = document.createElement('li');
-    const span = document.createElement('span');
-    const deletebtn = document.createElement('button');
-    editbtn = document.createElement('button');
+function fetchAndDisplayUsers(){
+  axios.get("https://crudcrud.com/api/753c5b07c7724977b1026319332f2aa4/appointmentData")
+  .then((response)=>{response.data.forEach(userDetails=>displayUserOnScreen(userDetails));
+})
+.catch((error)=>console.log(error));
+}
 
-    deletebtn.id = 'delete';
-    editbtn.id = 'edit';
+function displayUserOnScreen(userDetails) {
+  const userItem = document.createElement("li");
+  userItem.setAttribute("data-id", userDetails._id);
+  userItem.appendChild(
+    document.createTextNode(
+      `${userDetails.username} - ${userDetails.email} - ${userDetails.phone}`
+    )
+  );
 
-    span.innerText = `${item.amount}-${item.description}-${item.category}`;
-    deletebtn.innerText = 'Delete';
-    editbtn.innerText = 'Edit';
+  const deleteBtn = document.createElement("button");
+  deleteBtn.appendChild(document.createTextNode("Delete"));
+  userItem.appendChild(deleteBtn);
 
-    deletebtn.addEventListener('click', () => deleteItem(index));
-    editbtn.addEventListener('click', () => editItem(index));
+  const editBtn = document.createElement("button");
+  editBtn.appendChild(document.createTextNode("Edit"));
+  userItem.appendChild(editBtn);
 
-    li.append(span);
-    li.append(deletebtn);
-    li.append(editbtn);
+  const userList = document.querySelector("ul");
+  userList.appendChild(userItem);
 
-    ul.append(li);
+  deleteBtn.addEventListener("click", function (event) {
+    const userId = event.target.parentElement.getAttribute("data-id");
+    axios.delete(`https://crudcrud.com/api/753c5b07c7724977b1026319332f2aa4/appointmentData/${user-id}`)
+    .then(()=>{userList.removeChild(event.target.parentElement);})
+    .catch((error)=>console.log(error));
+    //userList.removeChild(event.target.parentElement);
+    //localStorage.removeItem(userDetails.email);
   });
-}
 
-function deleteItem(index) {
-  expenseItems.splice(index, 1);
-  localStorage.setItem('user-expenses', JSON.stringify(expenseItems));
-  if (!expenseItems.length) location.reload();
-  displayItems(expenseItems);
-}
-
-function editItem(index) {
-  let editAmount = document.querySelector('#amount');
-  let editDescription = document.querySelector('#description');
-  let editCategory = document.querySelector('#category');
-
-  editAmount.value = expenseItems[index].amount;
-  editDescription.value = expenseItems[index].description;
-  editCategory.value = expenseItems[index].category;
-
-  editingIndex = index;
+  editBtn.addEventListener("click", function (event) {
+    const userId=event.target.parentElement.getAttribute("data-id");
+    
+   // localStorage.removeItem(userDetails.email);
+    document.getElementById("username").value = userDetails.username;
+    document.getElementById("email").value = userDetails.email;
+    document.getElementById("phone").value = userDetails.phone;
+    userList.removeChild(event.target.parentElement);
+  });
 }
